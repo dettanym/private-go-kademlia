@@ -1,7 +1,7 @@
 syntax = "proto3";
 package dht.pb;
 
-option go_package = "../ipfsv1";
+option go_package = "../libp2p";
 
 // Record represents a dht record that contains a value
 // for a key value pair
