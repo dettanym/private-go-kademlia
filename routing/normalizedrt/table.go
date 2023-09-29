@@ -246,3 +246,22 @@ func (rt *NormalizedRt[K, N]) CplSize(cpl int) int {
 
 	return len(rt.buckets[bid])
 }
+
+// Returns an array of node IDs, upto rt.bucketSize in length, *privately*
+// given the commonPrefixLength or equivalently bucketID  bid of the
+// *queried* node (bid)
+// also takes in an ID of the *querying* peer (not *queried* peer).
+// The latter ID is used to avoid returning the querying node,
+// without looking at the output peer IDs.
+func (rt *NormalizedRt[K, N]) NearestNodesAsServer(unsafeBucketId int, queryingPeerKadId K) {
+	rt.mu.RLock()
+	defer rt.mu.RUnlock()
+
+	if unsafeBucketId < 0 {
+		return nil
+	} else if len(rt.buckets) > unsafeBucketId {
+		bucketId := len(rt.buckets) - 1
+	} else {
+		bucketId := unsafeBucketId
+	}
+}
