@@ -247,21 +247,28 @@ func (rt *NormalizedRt[K, N]) CplSize(cpl int) int {
 	return len(rt.buckets[bid])
 }
 
-// Returns an array of node IDs, upto rt.bucketSize in length, *privately*
-// given the commonPrefixLength or equivalently bucketID  bid of the
-// *queried* node (bid)
-// also takes in an ID of the *querying* peer (not *queried* peer).
-// The latter ID is used to avoid returning the querying node,
+// Only use for testing NormalizeRT function.
+// Returns an array of peerInfo, upto rt.bucketSize in length,
+// given the commonPrefixLength or equivalently bucket id of the
+// *queried* node and an ID of the *querying* peer (not *queried* peer).
+// The latter ID is used to avoid returning the querying peer,
 // without looking at the output peer IDs.
-func (rt *NormalizedRt[K, N]) NearestNodesAsServer(unsafeBucketId int, queryingPeerKadId K) {
+func (rt *NormalizedRt[K, N]) NearestNodesAsServer(unsafeBucketId int, queryingPeerKadId K) []N {
 	rt.mu.RLock()
 	defer rt.mu.RUnlock()
 
+	bucketID := 0
 	if unsafeBucketId < 0 {
 		return nil
 	} else if len(rt.buckets) > unsafeBucketId {
-		bucketId := len(rt.buckets) - 1
+		bucketID = len(rt.buckets) - 1
 	} else {
-		bucketId := unsafeBucketId
+		bucketID = unsafeBucketId
 	}
+
+	buckets := rt.NormalizeRT(queryingPeerKadId)
+
+	peerInfoForBucketID := buckets[bucketID]
+
+	return peerInfoForBucketID
 }
