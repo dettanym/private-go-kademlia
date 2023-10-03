@@ -42,12 +42,33 @@ func (rt *NormalizedRt[K, N]) flattenBucketRecords(buckets [][]peerInfo[K, N]) [
 	return chosenPeers
 }
 
-// Must make a new copy since we can't fill up buckets with more nodes from other buckets.
-// That will mess up with future NearestNodes calls *as a client*.
-func (rt *NormalizedRt[K, N]) NormalizeRT(queryingPeerKadId K) [][]peerInfo[K, N] {
+// Returns a normalized RT for PIR.
+func (rt *NormalizedRt[K, N]) normalizeRT(queryingPeerKadId K) [][]peerInfo[K, N] {
+	// Must make a new copy since we can't fill up buckets with more nodes from other buckets.
+	// That will mess up with future NearestNodes calls *as a client*.
 	normalizedRT := rt
 
 	normalizedRT.RemoveKey(queryingPeerKadId)
 
 	return normalizedRT.buckets
+}
+
+func (rt *NormalizedRt[K, N]) NormalizeRT(queryingPeerKadId K) (bucketsWithOnlyPeerIDs [][]N) {
+	buckets := rt.normalizeRT(queryingPeerKadId)
+
+	bucketsWithOnlyPeerIDs = rt.getPeerIDsFromBuckets(buckets)
+
+	return bucketsWithOnlyPeerIDs
+}
+
+func (rt *NormalizedRt[K, N]) getPeerIDsFromBuckets(buckets [][]peerInfo[K, N]) [][]N {
+	bucketsWithOnlyPeerIDs := make([][]N, 0)
+	for bid, peerInfos := range buckets {
+		bucketsWithOnlyPeerIDs[bid] = make([]N, 0)
+		for _, peerInfo := range peerInfos {
+			bucketsWithOnlyPeerIDs[bid] = append(bucketsWithOnlyPeerIDs[bid], peerInfo.id)
+		}
+	}
+
+	return bucketsWithOnlyPeerIDs
 }
