@@ -10,24 +10,28 @@ func (rt *NormalizedRt[K, N]) pickAtRandomFromRecords(n int, peers []peerInfo[K,
 	return chosenPeers
 }
 
-// TODO: Here previous buckets refers to closer buckets, but the RT is organized by CPL so it's the other way around.
-func (rt *NormalizedRt[K, N]) getRecordsFromPreviousBuckets(n int, previousBuckets [][]peerInfo[K, N]) []peerInfo[K, N] {
+// Gets records from higher bucket indices in our RT,
+// which have a *high* CPL with our node,
+// so correspond to buckets with *closer* nodes.
+func (rt *NormalizedRt[K, N]) getRecordsFromHigherBucketIndices(n int, higherBuckets [][]peerInfo[K, N]) []peerInfo[K, N] {
 	if n == 0 {
 		return make([]peerInfo[K, N], 0)
 	}
 
-	previousRecords := rt.flattenBucketRecords(previousBuckets)
+	recordsHigherBuckets := rt.flattenBucketRecords(higherBuckets)
 
-	if len(previousRecords) <= n {
-		return previousRecords
+	if len(recordsHigherBuckets) <= n {
+		return recordsHigherBuckets
 	}
 
-	return rt.pickAtRandomFromRecords(n, previousRecords)
+	return rt.pickAtRandomFromRecords(n, recordsHigherBuckets)
 }
 
-// TODO: In this RT, own bucket max size can be given as a function of the CPL or the bucket ID.
-func (rt *NormalizedRt[K, N]) getRecordsFromNextBuckets(n int, nextBuckets [][]peerInfo[K, N], ownBucketMaxSize int) []peerInfo[K, N] {
-
+// Gets records from lower bucket indices in our RT,
+// which have a *low* CPL with our node,
+// so correspond to buckets with *farther* nodes.
+func (rt *NormalizedRt[K, N]) getRecordsFromLowerBucketIndices(n int, nextBuckets [][]peerInfo[K, N], ownBucketMaxSize int) []peerInfo[K, N] {
+	return nextBuckets[0]
 }
 
 func (rt *NormalizedRt[K, N]) flattenBucketRecords(buckets [][]peerInfo[K, N]) []peerInfo[K, N] {
