@@ -1,5 +1,7 @@
 package normalizedrt
 
+import "math"
+
 func (rt *NormalizedRt[K, N]) pickAtRandomFromRecords(n int, peers []peerInfo[K, N]) []peerInfo[K, N] {
 	perm := rt.rand.Perm(len(peers))
 	topN := perm[:n]
@@ -50,11 +52,34 @@ func (rt *NormalizedRt[K, N]) flattenBucketRecords(buckets [][]peerInfo[K, N]) [
 func (rt *NormalizedRt[K, N]) normalizeRT(queryingPeerKadId K) [][]peerInfo[K, N] {
 	// Must make a new copy since we can't fill up buckets with more nodes from other buckets.
 	// That will mess up with future NearestNodes calls *as a client*.
-	normalizedRT := rt
+	regularRT := rt
 
-	normalizedRT.RemoveKey(queryingPeerKadId)
+	regularRT.RemoveKey(queryingPeerKadId)
 
-	return normalizedRT.buckets
+	// TODO: Add own key?
+
+	for index := len(regularRT.buckets) - 1; index >= 0; index-- {
+		bucket := regularRT.buckets[index]
+
+		initialBucketSize := len(bucket)
+
+		recordsFromHigherBuckets := regularRT.getRecordsFromHigherBucketIndices(
+			rt.bucketSize-initialBucketSize,
+			regularRT.buckets[index+1:])
+
+		recordsFromLowerBuckets := regularRT.getRecordsFromLowerBucketIndices(
+			rt.bucketSize-initialBucketSize-len(recordsFromHigherBuckets),
+			regularRT.buckets[:index],
+			int(math.Pow(2, float64(256-index))),
+		)
+
+		normalizedRecords := append(bucket, recordsFromHigherBuckets...)
+		normalizedRecords = append(normalizedRecords, recordsFromLowerBuckets...)
+
+		regularRT.buckets[index] = normalizedRecords
+	}
+
+	return regularRT.buckets
 }
 
 func (rt *NormalizedRt[K, N]) NormalizeRT(queryingPeerKadId K) (bucketsWithOnlyPeerIDs [][]N) {
