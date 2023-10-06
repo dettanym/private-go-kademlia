@@ -54,7 +54,9 @@ func (rt *NormalizedRt[K, N]) normalizeRT(queryingPeerKadId K) [][]peerInfo[K, N
 	// That will mess up with future NearestNodes calls *as a client*.
 	regularRT := rt
 
-	regularRT.RemoveKey(queryingPeerKadId)
+	if queryingPeerKadId != nil {
+		regularRT.RemoveKey(queryingPeerKadId)
+	}
 
 	// TODO: Add own key?
 
