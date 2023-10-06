@@ -240,3 +240,76 @@ func TestTableConcurrentReadWrite(t *testing.T) {
 	}
 	wg.Wait()
 }
+
+func TestRunNormalizeLower(t *testing.T) {
+	p := kt.NewID(key0)
+
+	rt := New[key.Key256](kt.NewID(key0), 4)
+
+	require.Equal(t, 0, rt.SizeOfBucket(0))
+
+	success := rt.addPeer(key10, p)
+	require.True(t, success)
+	success = rt.addPeer(key9, p)
+	require.True(t, success)
+	success = rt.addPeer(key11, p)
+	require.True(t, success)
+	success = rt.addPeer(key6, p)
+	require.True(t, success)
+
+	rt.NormalizeRT(key0)
+}
+
+func TestRunNormalizeHigher(t *testing.T) {
+	p := kt.NewID(key0)
+
+	rt := New[key.Key256](kt.NewID(key0), 2)
+
+	require.Equal(t, 0, rt.SizeOfBucket(0))
+
+	success := rt.addPeer(key10, p)
+	require.True(t, success)
+	success = rt.addPeer(key9, p)
+	require.True(t, success)
+	success = rt.addPeer(key11, p)
+	require.True(t, success)
+	success = rt.addPeer(key6, p)
+	require.True(t, success)
+
+	rt.NormalizeRT(key0)
+}
+
+// func TestPreviousBucketsUptoK(t *testing.T) {
+// 	// rust code:
+// 	/*
+// 	let rt = RoutingTable::new()
+//         .add_record(0, "0010", "RE")
+//         .add_record(1, "0001", "RE")
+//         .add_record(1, "0000", "RE")
+//         .add_record(2, "0111", "RE");
+
+// 	0011
+
+//     let normalize_rt = rt.normalize(SplitMix64::seed_from_u64(0).borrow_mut());
+//     assert_eq!(normalize_rt.buckets[2].records[0].cid, "0111");
+//     assert_eq!(normalize_rt.buckets[2].records[1].cid, "0010");
+//     assert_eq!(normalize_rt.buckets[2].records[2].cid, "0001");
+//     assert_eq!(normalize_rt.buckets[2].records[3].cid, "0000");
+// 	*/
+// 	p := kt.NewID(key0)
+
+// 	rt := New[key.Key256](kt.NewID(key0), 4)
+
+// 	require.Equal(t, 0, rt.SizeOfBucket(0))
+
+// 	success := rt.addPeer(key10, p)
+// 	require.True(t, success)
+// 	success = rt.addPeer(key9, p)
+// 	require.True(t, success)
+// 	success = rt.addPeer(key11, p)
+// 	require.True(t, success)
+// 	success = rt.addPeer(key6, p)
+// 	require.True(t, success)
+
+// 	rt.NormalizeRT(key0)
+// }
