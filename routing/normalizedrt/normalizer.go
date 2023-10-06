@@ -93,9 +93,9 @@ func (rt *NormalizedRt[K, N]) NormalizeRT(queryingPeerKadId K) (bucketsWithOnlyP
 }
 
 func (rt *NormalizedRt[K, N]) getPeerIDsFromBuckets(buckets [][]peerInfo[K, N]) [][]N {
-	bucketsWithOnlyPeerIDs := make([][]N, 0)
+	bucketsWithOnlyPeerIDs := make([][]N, len(buckets))
 	for bid, peerInfos := range buckets {
-		bucketsWithOnlyPeerIDs[bid] = make([]N, 0)
+		bucketsWithOnlyPeerIDs[bid] = make([]N, len(peerInfos))
 		for _, peerInfo := range peerInfos {
 			bucketsWithOnlyPeerIDs[bid] = append(bucketsWithOnlyPeerIDs[bid], peerInfo.id)
 		}
