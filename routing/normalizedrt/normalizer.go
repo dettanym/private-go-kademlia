@@ -3,6 +3,7 @@ package normalizedrt
 import (
 	"fmt"
 	"math"
+	"sort"
 )
 
 func (rt *NormalizedRt[K, N]) pickAtRandomFromRecords(n int, peers []peerInfo[K, N]) []peerInfo[K, N] {
@@ -35,6 +36,34 @@ func (rt *NormalizedRt[K, N]) getRecordsFromHigherBucketIndices(n int, higherBuc
 func (rt *NormalizedRt[K, N]) createSubBuckets(ownBucketIndex int, earlierBucketIndex int, sampleBucketKey K, records []peerInfo[K, N]) [][]peerInfo[K, N] {
 	numberOfSubBuckets := int(math.Pow(2, math.Abs(float64(ownBucketIndex-earlierBucketIndex))))
 	subBuckets := make([][]peerInfo[K, N], numberOfSubBuckets)
+
+	sort.SliceStable(records, func(i, j int) bool {
+		distI := records[i].kadId.Xor(sampleBucketKey)
+		distJ := records[j].kadId.Xor(sampleBucketKey)
+
+		cmp := distI.Compare(distJ)
+		if cmp != 0 {
+			return cmp < 0
+		}
+		return false
+	})
+
+	smallestDistanceToOwnBucket := int(math.Pow(2, math.Abs(float64(sampleBucketKey.BitLen()-ownBucketIndex+earlierBucketIndex-1))))
+	subBucketIndex := 0
+	subBucketDistanceLowerLimit := smallestDistanceToOwnBucket
+	distSpannedByEachSubBucket := int(math.Pow(2, math.Abs(float64(sampleBucketKey.BitLen()-ownBucketIndex))))
+	fmt.Println(subBucketIndex, subBucketDistanceLowerLimit, distSpannedByEachSubBucket)
+	//for _, record := range records {
+	//	recordDist := record.kadId.Xor(sampleBucketKey)
+	//	// Compare  recordDist to subBucketDistanceLowerLimit and distSpannedByEachSubBucket
+	//
+	//}
+	// No. of nodes at max in ownBucket, ignoring bucketSize = 2^(255-ownBucketIndex)
+	// No. of nodes at max in a lower subBucket ownBucketIndex -j = 2^(255-ownBucketIndex) * 2^j
+	// No. of subbuckets = 2^j
+	// Each subbucket from lowerBuckets has indices 0 to ownBucketIndex - 1
+	// So iterate over them in reverse, get ownBucketIndex - 1, ownBucketIndex - 2... 0
+	// Got to put all nodes that are within a certain distance (calculate) into first subbucket, rest into second subbucket etc.
 	fmt.Println(sampleBucketKey, records)
 	return subBuckets
 }
