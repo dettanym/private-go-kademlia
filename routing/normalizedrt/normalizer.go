@@ -39,7 +39,8 @@ func (rt *NormalizedRt[K, N]) getRecordsFromLowerBucketIndices(n int, nextBucket
 func (rt *NormalizedRt[K, N]) flattenBucketRecords(buckets [][]peerInfo[K, N]) []peerInfo[K, N] {
 	chosenPeers := make([]peerInfo[K, N], 0)
 
-	for _, bucket := range buckets {
+	for index := len(buckets) - 1; index >= 0; index-- {
+		bucket := buckets[index]
 		for _, kadIDPeerIDRecord := range bucket {
 			chosenPeers = append(chosenPeers, kadIDPeerIDRecord)
 		}
