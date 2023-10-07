@@ -1,6 +1,9 @@
 package normalizedrt
 
-import "math"
+import (
+	"fmt"
+	"math"
+)
 
 func (rt *NormalizedRt[K, N]) pickAtRandomFromRecords(n int, peers []peerInfo[K, N]) []peerInfo[K, N] {
 	perm := rt.rand.Perm(len(peers))
@@ -29,11 +32,58 @@ func (rt *NormalizedRt[K, N]) getRecordsFromHigherBucketIndices(n int, higherBuc
 	return rt.pickAtRandomFromRecords(n, recordsHigherBuckets)
 }
 
+func (rt *NormalizedRt[K, N]) createSubBuckets(ownBucketIndex int, earlierBucketIndex int, sampleBucketKey K, records []peerInfo[K, N]) [][]peerInfo[K, N] {
+	numberOfSubBuckets := int(math.Pow(2, math.Abs(float64(ownBucketIndex-earlierBucketIndex))))
+	subBuckets := make([][]peerInfo[K, N], numberOfSubBuckets)
+	fmt.Println(sampleBucketKey, records)
+	return subBuckets
+}
+
 // Gets records from lower bucket indices in our RT,
 // which have a *low* CPL with our node,
 // so correspond to buckets with *farther* nodes.
-func (rt *NormalizedRt[K, N]) getRecordsFromLowerBucketIndices(n int, nextBuckets [][]peerInfo[K, N], ownBucketMaxSize int) []peerInfo[K, N] {
-	return nextBuckets[0]
+func (rt *NormalizedRt[K, N]) getRecordsFromLowerBucketIndices(n int, lowerBuckets [][]peerInfo[K, N], ownBucketIndex int) []peerInfo[K, N] {
+	accOuter := make([]peerInfo[K, N], 0)
+
+	for i := len(lowerBuckets) - 1; i >= 0; i-- {
+		if len(accOuter) == n {
+			return accOuter
+		}
+
+		bucket := lowerBuckets[i]
+		if len(bucket)+len(accOuter) <= n {
+			// If we can add all of this bucket, without exceeding n
+			// Then add it
+			accOuter = append(accOuter, bucket...)
+		} else {
+			// Can only add some records from this bucket
+			maxSubBucketsLen := n - len(accOuter)
+			accInner := make([]peerInfo[K, N], maxSubBucketsLen)
+
+			// First create subbuckets
+			// Each subbucket contains nodes that are equidistant to nodes from our bucket,
+			// given just the prefix of our bucket
+			sampleBucketKey := bucket[0].kadId
+			subBuckets := rt.createSubBuckets(ownBucketIndex, i, sampleBucketKey, bucket)
+
+			// Pick upto maxSubBucketsLen elements from subBuckets
+			for j := len(subBuckets) - 1; j >= 0; j-- {
+				if len(subBuckets[j]) <= maxSubBucketsLen-len(accInner) {
+					// Can add next subbucket entirely (without accInner exceeding maxSubBucketsLen)
+					accInner = append(accInner, subBuckets[j]...)
+				} else {
+					// Can't add next subbucket entirely (accInner exceeds maxSubBucketsLen)
+					// Pick elements at random from next subbucket
+					// (since without knowing the full CID of the target in a given non-full bucket,
+					// we can't pick closest nodes from other buckets more precisely).
+					subSubBucket := rt.pickAtRandomFromRecords(maxSubBucketsLen-len(accInner), subBuckets[j])
+					accInner = append(accInner, subSubBucket...)
+				}
+			}
+			accOuter = append(accOuter, accInner...)
+		}
+	}
+	return accOuter
 }
 
 func (rt *NormalizedRt[K, N]) flattenBucketRecords(buckets [][]peerInfo[K, N]) []peerInfo[K, N] {
