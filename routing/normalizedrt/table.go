@@ -254,9 +254,6 @@ func (rt *NormalizedRt[K, N]) CplSize(cpl int) int {
 // The latter ID is used to avoid returning the querying peer,
 // without looking at the output peer IDs.
 func (rt *NormalizedRt[K, N]) NearestNodesAsServer(unsafeBucketId int, queryingPeerKadId K) []N {
-	rt.mu.RLock()
-	defer rt.mu.RUnlock()
-
 	bucketID := 0
 	if unsafeBucketId < 0 {
 		return nil
