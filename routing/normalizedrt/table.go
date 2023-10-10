@@ -24,7 +24,9 @@ type NormalizedRt[K kad.Key[K], N kad.NodeID[K]] struct {
 	buckets                [][]peerInfo[K, N]
 	rand                   rand.Rand
 	mutexNormalizedBuckets sync.RWMutex // guards access to normalizedBuckets
-	normalizedBuckets      [][]peerInfo[K, N]
+	// Must make a new copy since we can't fill up non-empty buckets with more nodes from other buckets.
+	// That will mess up with future NearestNodes calls *as a client*.
+	normalizedBuckets [][]peerInfo[K, N]
 }
 
 var _ kad.RoutingTable[key.Key256, kadtest.ID[key.Key256]] = (*NormalizedRt[key.Key256, kadtest.ID[key.Key256]])(nil)
@@ -164,6 +166,26 @@ func (rt *NormalizedRt[K, N]) RemoveKey(kadId K) bool {
 			// remove peer from bucket
 			rt.buckets[bid][i] = rt.buckets[bid][len(rt.buckets[bid])-1]
 			rt.buckets[bid] = rt.buckets[bid][:len(rt.buckets[bid])-1]
+			return true
+		}
+	}
+	return false
+}
+
+func (rt *NormalizedRt[K, N]) initializeNormalizedBucketsForClient(kadId K) bool {
+	rt.mutexNormalizedBuckets.Lock()
+	defer rt.mutexNormalizedBuckets.Unlock()
+
+	rt.mu.RLock()
+	rt.normalizedBuckets = rt.buckets
+	bid, _ := rt.bucketIdForKey(kadId)
+	rt.mu.RUnlock()
+
+	for i, p := range rt.normalizedBuckets[bid] {
+		if key.Equal(kadId, p.kadId) {
+			// remove peer from bucket
+			rt.normalizedBuckets[bid][i] = rt.normalizedBuckets[bid][len(rt.normalizedBuckets[bid])-1]
+			rt.normalizedBuckets[bid] = rt.normalizedBuckets[bid][:len(rt.normalizedBuckets[bid])-1]
 			return true
 		}
 	}
