@@ -259,7 +259,7 @@ func TestRunNormalizeLower(t *testing.T) {
 
 	client := key3 // NormalizeRT drops the client's key before normalizing
 	// rt.NormalizeRT(client) // NearestNodesAsServer runs NormalizeRT
-	// require.Equal(t, bucketSize, len(buckets[0]))
+	require.Equal(t, bucketSize, rt.SizeOfBucket(0))
 
 	peers := rt.NearestNodesAsServer(0, client)
 	require.Equal(t, bucketSize, len(peers))
