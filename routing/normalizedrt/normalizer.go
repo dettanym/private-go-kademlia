@@ -130,13 +130,14 @@ func (rt *NormalizedRt[K, N]) flattenBucketRecords(buckets [][]peerInfo[K, N]) [
 
 // Returns a normalized RT for PIR.
 func (rt *NormalizedRt[K, N]) normalizeRT(queryingPeerKadId K) [][]peerInfo[K, N] {
+	rt.mu.Lock()
+	defer rt.mu.Unlock()
+
 	if &queryingPeerKadId != nil {
 		rt.initializeNormalizedBucketsForClient(queryingPeerKadId)
 	}
 
 	// TODO: Add own key?
-	rt.mutexNormalizedBuckets.RLock()
-	defer rt.mutexNormalizedBuckets.RUnlock()
 	for index := len(rt.buckets) - 1; index >= 0; index-- {
 		bucket := rt.buckets[index]
 

@@ -20,10 +20,9 @@ type NormalizedRt[K kad.Key[K], N kad.NodeID[K]] struct {
 	self       K
 	bucketSize int
 
-	mu                     sync.RWMutex // guards access to buckets
-	buckets                [][]peerInfo[K, N]
-	rand                   rand.Rand
-	mutexNormalizedBuckets sync.RWMutex // guards access to normalizedBuckets
+	mu      sync.RWMutex // guards access to buckets
+	buckets [][]peerInfo[K, N]
+	rand    rand.Rand
 	// Must make a new copy since we can't fill up non-empty buckets with more nodes from other buckets.
 	// That will mess up with future NearestNodes calls *as a client*.
 	normalizedBuckets [][]peerInfo[K, N]
@@ -173,13 +172,8 @@ func (rt *NormalizedRt[K, N]) RemoveKey(kadId K) bool {
 }
 
 func (rt *NormalizedRt[K, N]) initializeNormalizedBucketsForClient(kadId K) bool {
-	rt.mutexNormalizedBuckets.Lock()
-	defer rt.mutexNormalizedBuckets.Unlock()
-
-	rt.mu.RLock()
 	rt.normalizedBuckets = rt.buckets
 	bid, _ := rt.bucketIdForKey(kadId)
-	rt.mu.RUnlock()
 
 	for i, p := range rt.normalizedBuckets[bid] {
 		if key.Equal(kadId, p.kadId) {
