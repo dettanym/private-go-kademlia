@@ -257,10 +257,11 @@ func TestRunNormalizeLower(t *testing.T) {
 	success = rt.addPeer(key6, p)
 	require.True(t, success)
 
-	// rt.NormalizeRT(key0) // NearestNodesAsServer runs NormalizeRT
+	client := key3 // NormalizeRT drops the client's key before normalizing
+	// rt.NormalizeRT(client) // NearestNodesAsServer runs NormalizeRT
 	// require.Equal(t, bucketSize, len(buckets[0]))
 
-	peers := rt.NearestNodesAsServer(0, key0) //<-- this should also work but it times out.
+	peers := rt.NearestNodesAsServer(0, client)
 	require.Equal(t, bucketSize, len(peers))
 }
 
@@ -280,7 +281,8 @@ func TestRunNormalizeHigher(t *testing.T) {
 	success = rt.addPeer(key6, p)
 	require.True(t, success)
 
-	peers := rt.NearestNodesAsServer(0, key0)
+	client := key3
+	peers := rt.NearestNodesAsServer(0, client)
 	require.Equal(t, bucketSize, len(peers))
 }
 
