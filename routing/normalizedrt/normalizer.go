@@ -130,38 +130,35 @@ func (rt *NormalizedRt[K, N]) flattenBucketRecords(buckets [][]peerInfo[K, N]) [
 
 // Returns a normalized RT for PIR.
 func (rt *NormalizedRt[K, N]) normalizeRT(queryingPeerKadId K) [][]peerInfo[K, N] {
-	// Must make a new copy since we can't fill up buckets with more nodes from other buckets.
-	// That will mess up with future NearestNodes calls *as a client*.
-	regularRT := rt
-
 	if &queryingPeerKadId != nil {
-		regularRT.RemoveKey(queryingPeerKadId)
+		rt.initializeNormalizedBucketsForClient(queryingPeerKadId)
 	}
 
 	// TODO: Add own key?
-
-	for index := len(regularRT.buckets) - 1; index >= 0; index-- {
-		bucket := regularRT.buckets[index]
+	rt.mutexNormalizedBuckets.RLock()
+	defer rt.mutexNormalizedBuckets.RUnlock()
+	for index := len(rt.buckets) - 1; index >= 0; index-- {
+		bucket := rt.buckets[index]
 
 		initialBucketSize := len(bucket)
 
-		recordsFromHigherBuckets := regularRT.getRecordsFromHigherBucketIndices(
+		recordsFromHigherBuckets := rt.getRecordsFromHigherBucketIndices(
 			rt.bucketSize-initialBucketSize,
-			regularRT.buckets[index+1:])
+			rt.normalizedBuckets[index+1:])
 
-		recordsFromLowerBuckets := regularRT.getRecordsFromLowerBucketIndices(
+		recordsFromLowerBuckets := rt.getRecordsFromLowerBucketIndices(
 			rt.bucketSize-initialBucketSize-len(recordsFromHigherBuckets),
-			regularRT.buckets[:index],
+			rt.normalizedBuckets[:index],
 			index,
 		)
 
 		normalizedRecords := append(bucket, recordsFromHigherBuckets...)
 		normalizedRecords = append(normalizedRecords, recordsFromLowerBuckets...)
 
-		regularRT.buckets[index] = normalizedRecords
+		rt.normalizedBuckets[index] = normalizedRecords
 	}
 
-	return regularRT.buckets
+	return rt.normalizedBuckets
 }
 
 func (rt *NormalizedRt[K, N]) NormalizeRT(queryingPeerKadId K) (bucketsWithOnlyPeerIDs [][]N) {
