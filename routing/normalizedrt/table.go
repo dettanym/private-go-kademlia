@@ -20,18 +20,21 @@ type NormalizedRt[K kad.Key[K], N kad.NodeID[K]] struct {
 	self       K
 	bucketSize int
 
-	mu      sync.RWMutex // guards access to buckets
-	buckets [][]peerInfo[K, N]
-	rand    rand.Rand
+	mu                     sync.RWMutex // guards access to buckets
+	buckets                [][]peerInfo[K, N]
+	rand                   rand.Rand
+	mutexNormalizedBuckets sync.RWMutex // guards access to normalizedBuckets
+	normalizedBuckets      [][]peerInfo[K, N]
 }
 
 var _ kad.RoutingTable[key.Key256, kadtest.ID[key.Key256]] = (*NormalizedRt[key.Key256, kadtest.ID[key.Key256]])(nil)
 
 func New[K kad.Key[K], N kad.NodeID[K]](self N, bucketSize int) *NormalizedRt[K, N] {
 	rt := NormalizedRt[K, N]{
-		self:       self.Key(),
-		buckets:    make([][]peerInfo[K, N], 0),
-		bucketSize: bucketSize,
+		self:              self.Key(),
+		buckets:           make([][]peerInfo[K, N], 0),
+		bucketSize:        bucketSize,
+		normalizedBuckets: make([][]peerInfo[K, N], 0),
 	}
 	// define bucket 0
 	rt.buckets = append(rt.buckets, make([]peerInfo[K, N], 0))
