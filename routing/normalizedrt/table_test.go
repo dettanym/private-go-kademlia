@@ -243,8 +243,8 @@ func TestTableConcurrentReadWrite(t *testing.T) {
 
 func TestRunNormalizeLower(t *testing.T) {
 	p := kt.NewID(key0)
-
-	rt := New[key.Key256](kt.NewID(key0), 4)
+	bucketSize := 4
+	rt := New[key.Key256](kt.NewID(key0), bucketSize)
 
 	require.Equal(t, 0, rt.SizeOfBucket(0))
 
@@ -257,13 +257,17 @@ func TestRunNormalizeLower(t *testing.T) {
 	success = rt.addPeer(key6, p)
 	require.True(t, success)
 
-	rt.NormalizeRT(key0)
+	// rt.NormalizeRT(key0) // NearestNodesAsServer runs NormalizeRT
+	// require.Equal(t, bucketSize, len(buckets[0]))
+
+	peers := rt.NearestNodesAsServer(0, key0) //<-- this should also work but it times out.
+	require.Equal(t, bucketSize, len(peers))
 }
 
 func TestRunNormalizeHigher(t *testing.T) {
 	p := kt.NewID(key0)
-
-	rt := New[key.Key256](kt.NewID(key0), 2)
+	bucketSize := 2
+	rt := New[key.Key256](kt.NewID(key0), bucketSize)
 
 	require.Equal(t, 0, rt.SizeOfBucket(0))
 
@@ -276,7 +280,8 @@ func TestRunNormalizeHigher(t *testing.T) {
 	success = rt.addPeer(key6, p)
 	require.True(t, success)
 
-	rt.NormalizeRT(key0)
+	peers := rt.NearestNodesAsServer(0, key0)
+	require.Equal(t, bucketSize, len(peers))
 }
 
 // func TestPreviousBucketsUptoK(t *testing.T) {
