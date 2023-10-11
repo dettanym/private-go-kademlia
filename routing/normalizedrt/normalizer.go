@@ -145,11 +145,11 @@ func (rt *NormalizedRt[K, N]) normalizeRT(queryingPeerKadId K) [][]peerInfo[K, N
 
 		recordsFromHigherBuckets := rt.getRecordsFromHigherBucketIndices(
 			rt.bucketSize-initialBucketSize,
-			rt.normalizedBuckets[index+1:])
+			rt.buckets[index+1:])
 
 		recordsFromLowerBuckets := rt.getRecordsFromLowerBucketIndices(
 			rt.bucketSize-initialBucketSize-len(recordsFromHigherBuckets),
-			rt.normalizedBuckets[:index],
+			rt.buckets[:index],
 			index,
 		)
 
