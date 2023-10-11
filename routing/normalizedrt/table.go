@@ -36,6 +36,9 @@ func New[K kad.Key[K], N kad.NodeID[K]](self N, bucketSize int) *NormalizedRt[K,
 		buckets:           make([][]peerInfo[K, N], 0),
 		bucketSize:        bucketSize,
 		normalizedBuckets: make([][]peerInfo[K, N], 0),
+		// TODO: Check with Shannon that a fixed seed is okay?
+		//  Or should I use a CSRNG?
+		rand: *rand.New(rand.NewSource(37)),
 	}
 	// define bucket 0
 	rt.buckets = append(rt.buckets, make([]peerInfo[K, N], 0))

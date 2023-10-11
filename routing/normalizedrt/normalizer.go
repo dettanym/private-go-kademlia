@@ -9,7 +9,7 @@ import (
 func (rt *NormalizedRt[K, N]) pickAtRandomFromRecords(n int, peers []peerInfo[K, N]) []peerInfo[K, N] {
 	perm := rt.rand.Perm(len(peers))
 	topN := perm[:n]
-	chosenPeers := make([]peerInfo[K, N], 0, n)
+	chosenPeers := make([]peerInfo[K, N], n)
 	for index, randomIndex := range topN {
 		chosenPeers[index] = peers[randomIndex]
 	}
