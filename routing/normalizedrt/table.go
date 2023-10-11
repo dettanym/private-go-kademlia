@@ -284,17 +284,12 @@ func (rt *NormalizedRt[K, N]) CplSize(cpl int) int {
 // *queried* node and an ID of the *querying* peer (not *queried* peer).
 // The latter ID is used to avoid returning the querying peer,
 // without looking at the output peer IDs.
-func (rt *NormalizedRt[K, N]) NearestNodesAsServer(unsafeBucketId int, queryingPeerKadId K) []N {
-	bucketID := 0
-	if unsafeBucketId < 0 {
-		return nil
-	} else if len(rt.buckets) > unsafeBucketId {
-		bucketID = len(rt.buckets) - 1
-	} else {
-		bucketID = unsafeBucketId
+func (rt *NormalizedRt[K, N]) NearestNodesAsServer(target K, client K) []N {
+	bucketID, err := rt.BucketIdForKey(target)
+	if err != nil {
+		return make([]N, 0)
 	}
-
-	buckets := rt.NormalizeRT(queryingPeerKadId)
+	buckets := rt.NormalizeRT(client)
 
 	peerInfoForBucketID := buckets[bucketID]
 
