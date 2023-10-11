@@ -172,7 +172,16 @@ func (rt *NormalizedRt[K, N]) RemoveKey(kadId K) bool {
 }
 
 func (rt *NormalizedRt[K, N]) initializeNormalizedBucketsForClient(kadId K) bool {
-	rt.normalizedBuckets = rt.buckets
+	rt.normalizedBuckets = make([][]peerInfo[K, N], len(rt.buckets))
+	//copy(rt.normalizedBuckets, rt.buckets)
+
+	for i, bucket := range rt.buckets {
+		rt.normalizedBuckets[i] = make([]peerInfo[K, N], len(bucket))
+		for j, givenPeerInfo := range rt.buckets[i] {
+			rt.normalizedBuckets[i][j] = givenPeerInfo
+		}
+	}
+
 	bid, _ := rt.bucketIdForKey(kadId)
 
 	for i, p := range rt.normalizedBuckets[bid] {
