@@ -241,6 +241,75 @@ func TestTableConcurrentReadWrite(t *testing.T) {
 	wg.Wait()
 }
 
+func TestRunNormalizeFullBucket(t *testing.T) {
+	///////////////////////////////////////////////////////////////////////////////
+	bucketSize := 5
+
+	rt := NewWithKey[key.Key256, libp2p.PeerID](key0, bucketSize)
+
+	require.Equal(t, 0, rt.SizeOfBucket(0))
+	peerIds := make([]libp2p.PeerID, 0, 12)
+	for i := 0; i < 12; i++ {
+		peerIds = append(peerIds, libp2p.PeerID{ID: peer.ID(fmt.Sprintf("QmPeer%d", i))})
+	}
+
+	// adds peers in order of closest to farthest
+	// nodes in each bucket (including the last bucket) have CID equal to the bucket index
+	rt.addPeer(key9, peerIds[9])
+	rt.addPeer(key8, peerIds[8])
+	rt.addPeer(key7, peerIds[7])
+	rt.addPeer(key10, peerIds[10])
+	rt.addPeer(key11, peerIds[11])
+	rt.addPeer(key1, peerIds[1])
+	rt.addPeer(key5, peerIds[5])
+	rt.addPeer(key6, peerIds[6])
+	rt.addPeer(key2, peerIds[2])
+	rt.addPeer(key3, peerIds[3])
+	rt.addPeer(key4, peerIds[4])
+
+	// find the 5 nearest peers to key0
+	peers := rt.NearestNodesAsServer(key0, key3) // fetches nodes from bucket 3 (highest CPL with key0)
+	require.Equal(t, bucketSize, len(peers))
+
+	// tests getRecordsFromLowerBucketIndices --- outer if loop
+	// add all of a lower bucket, without going into subbuckets at all (or randomization)
+	expectedOrder := []libp2p.PeerID{peerIds[9], peerIds[8], peerIds[7], peerIds[10], peerIds[11]}
+	require.Equal(t, expectedOrder, peers)
+
+	peersNearestNodes := rt.NearestNodes(key10, bucketSize)
+	peersNearestNodesAsServer := rt.NearestNodesAsServer(key10, key3) // fetches nodes from bucket 2
+
+	require.Equal(t, bucketSize, len(peersNearestNodes))
+	require.Equal(t, bucketSize, len(peersNearestNodesAsServer))
+
+	// tests getRecordsFromHigherBucketIndices, flattenBucketRecords
+	// add all of a higher bucket, without randomization
+	expectedOrder = []libp2p.PeerID{peerIds[10], peerIds[11], peerIds[9], peerIds[8], peerIds[7]}
+	require.Equal(t, expectedOrder, peersNearestNodes)
+	require.Equal(t, expectedOrder, peersNearestNodesAsServer)
+
+	peersNearestNodes = rt.NearestNodes(key10, bucketSize) // fetches nodes from bucket 1
+	peersNearestNodesAsServer = rt.NearestNodesAsServer(key10, key3)
+
+	// tests getRecordsFromHigherBucketIndices, flattenBucketRecords
+	// add all of a higher bucket, *with* randomization (pick 2 of total 5 peers across 2 higher buckets)
+	// picks peerID 11, 7 with seed 37 initialized internally in NewWithKey above
+	expectedOrder = []libp2p.PeerID{peerIds[1], peerIds[5], peerIds[6], peerIds[11], peerIds[7]}
+	require.Equal(t, expectedOrder, peersNearestNodes)
+	require.Equal(t, expectedOrder, peersNearestNodesAsServer)
+
+	peersNearestNodes = rt.NearestNodes(key3, bucketSize)
+	peersNearestNodesAsServer = rt.NearestNodesAsServer(key3, key10) // fetches nodes from bucket 0
+
+	// tests the same functions as the previous case (bucket 1)
+	// tests getRecordsFromHigherBucketIndices, flattenBucketRecords
+	// add all of a higher bucket, *with* randomization (pick 2 of total 8 peers across 2 higher buckets)
+	// picks peerID 6, 8 with seed 37 initialized internally in NewWithKey above
+	expectedOrder = []libp2p.PeerID{peerIds[2], peerIds[3], peerIds[4], peerIds[6], peerIds[8]}
+	require.Equal(t, expectedOrder, peersNearestNodes)
+	require.Equal(t, expectedOrder, peersNearestNodesAsServer)
+}
+
 func TestRunNormalizeLower(t *testing.T) {
 	p := kt.NewID(key0)
 	bucketSize := 4
