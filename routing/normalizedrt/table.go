@@ -25,7 +25,8 @@ type NormalizedRt[K kad.Key[K], N kad.NodeID[K]] struct {
 	rand    rand.Rand
 	// Must make a new copy since we can't fill up non-empty buckets with more nodes from other buckets.
 	// That will mess up with future NearestNodes calls *as a client*.
-	normalizedBuckets [][]peerInfo[K, N]
+	normalizedBuckets            [][]peerInfo[K, N]
+	peersAddedSinceNormalization bool
 }
 
 var _ kad.RoutingTable[key.Key256, kadtest.ID[key.Key256]] = (*NormalizedRt[key.Key256, kadtest.ID[key.Key256]])(nil)
@@ -38,7 +39,25 @@ func New[K kad.Key[K], N kad.NodeID[K]](self N, bucketSize int) *NormalizedRt[K,
 		normalizedBuckets: make([][]peerInfo[K, N], 0),
 		// TODO: Check with Shannon that a fixed seed is okay?
 		//  Or should I use a CSRNG?
-		rand: *rand.New(rand.NewSource(37)),
+		rand:                         *rand.New(rand.NewSource(37)),
+		peersAddedSinceNormalization: false,
+	}
+	// define bucket 0
+	rt.buckets = append(rt.buckets, make([]peerInfo[K, N], 0))
+	return &rt
+}
+
+// Only use for testing NearestNodes or NearestNodesAsServer
+func NewWithKey[K kad.Key[K], N kad.NodeID[K]](key K, bucketSize int) *NormalizedRt[K, N] {
+	rt := NormalizedRt[K, N]{
+		self:              key,
+		buckets:           make([][]peerInfo[K, N], 0),
+		bucketSize:        bucketSize,
+		normalizedBuckets: make([][]peerInfo[K, N], 0),
+		// TODO: Check with Shannon that a fixed seed is okay?
+		//  Or should I use a CSRNG?
+		rand:                         *rand.New(rand.NewSource(37)),
+		peersAddedSinceNormalization: false,
 	}
 	// define bucket 0
 	rt.buckets = append(rt.buckets, make([]peerInfo[K, N], 0))
@@ -86,6 +105,10 @@ func (rt *NormalizedRt[K, N]) AddNode(id N) bool {
 func (rt *NormalizedRt[K, N]) addPeer(kadId K, id N) bool {
 	rt.mu.Lock()
 	defer rt.mu.Unlock()
+
+	if !rt.peersAddedSinceNormalization {
+		rt.peersAddedSinceNormalization = true
+	}
 
 	// no need to check the error here, it's already been checked in keyError
 	bid, _ := rt.bucketIdForKey(kadId)

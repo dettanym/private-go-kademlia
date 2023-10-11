@@ -163,9 +163,14 @@ func (rt *NormalizedRt[K, N]) normalizeRT(queryingPeerKadId K) [][]peerInfo[K, N
 }
 
 func (rt *NormalizedRt[K, N]) NormalizeRT(queryingPeerKadId K) (bucketsWithOnlyPeerIDs [][]N) {
-	buckets := rt.normalizeRT(queryingPeerKadId)
+	var normalizedBuckets [][]peerInfo[K, N]
+	if rt.peersAddedSinceNormalization {
+		normalizedBuckets = rt.normalizeRT(queryingPeerKadId)
+	} else {
+		normalizedBuckets = rt.normalizedBuckets
+	}
 
-	bucketsWithOnlyPeerIDs = rt.getPeerIDsFromBuckets(buckets)
+	bucketsWithOnlyPeerIDs = rt.getPeerIDsFromBuckets(normalizedBuckets)
 
 	return bucketsWithOnlyPeerIDs
 }
