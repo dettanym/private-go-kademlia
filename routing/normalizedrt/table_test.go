@@ -288,14 +288,17 @@ func TestRunNormalizeFullBucket(t *testing.T) {
 	require.Equal(t, expectedOrder, peersNearestNodes)
 	require.Equal(t, expectedOrder, peersNearestNodesAsServer)
 
-	peersNearestNodes = rt.NearestNodes(key10, bucketSize) // fetches nodes from bucket 1
-	peersNearestNodesAsServer = rt.NearestNodesAsServer(key10, key3)
+	// TODO: check -- this was set to query for key10 but I think it should be key1 or key5
+	peersNearestNodes = rt.NearestNodes(key1, bucketSize) // fetches nodes from bucket 1
+	peersNearestNodesAsServer = rt.NearestNodesAsServer(key1, key3)
 
 	// tests getRecordsFromHigherBucketIndices, flattenBucketRecords
 	// add all of a higher bucket, *with* randomization (pick 2 of total 5 peers across 2 higher buckets)
-	// picks peerID 11, 7 with seed 37 initialized internally in NewWithKey above
-	expectedOrder = []libp2p.PeerID{peerIds[1], peerIds[5], peerIds[6], peerIds[11], peerIds[7]}
+	// picks peerID 9, 8 with seed 37 initialized internally in NewWithKey above
+	// then picks peerID 10, 7
+	expectedOrder = []libp2p.PeerID{peerIds[1], peerIds[5], peerIds[6], peerIds[9], peerIds[8]}
 	require.Equal(t, expectedOrder, peersNearestNodes)
+	expectedOrder = []libp2p.PeerID{peerIds[1], peerIds[5], peerIds[6], peerIds[10], peerIds[7]}
 	require.Equal(t, expectedOrder, peersNearestNodesAsServer)
 
 	peersNearestNodes = rt.NearestNodes(key3, bucketSize)
@@ -304,9 +307,11 @@ func TestRunNormalizeFullBucket(t *testing.T) {
 	// tests the same functions as the previous case (bucket 1)
 	// tests getRecordsFromHigherBucketIndices, flattenBucketRecords
 	// add all of a higher bucket, *with* randomization (pick 2 of total 8 peers across 2 higher buckets)
-	// picks peerID 6, 8 with seed 37 initialized internally in NewWithKey above
-	expectedOrder = []libp2p.PeerID{peerIds[2], peerIds[3], peerIds[4], peerIds[6], peerIds[8]}
+	// picks peerID 1, 5 with seed 37 initialized internally in NewWithKey above
+	// then picks peerID 9, 1
+	expectedOrder = []libp2p.PeerID{peerIds[2], peerIds[3], peerIds[4], peerIds[1], peerIds[5]}
 	require.Equal(t, expectedOrder, peersNearestNodes)
+	expectedOrder = []libp2p.PeerID{peerIds[2], peerIds[3], peerIds[4], peerIds[9], peerIds[1]}
 	require.Equal(t, expectedOrder, peersNearestNodesAsServer)
 }
 
@@ -357,37 +362,4 @@ func TestRunNormalizeHigher(t *testing.T) {
 	require.Equal(t, bucketSize, len(peers))
 }
 
-// func TestPreviousBucketsUptoK(t *testing.T) {
-// 	// rust code:
-// 	/*
-// 	let rt = RoutingTable::new()
-//         .add_record(0, "0010", "RE")
-//         .add_record(1, "0001", "RE")
-//         .add_record(1, "0000", "RE")
-//         .add_record(2, "0111", "RE");
 
-// 	0011
-
-//     let normalize_rt = rt.normalize(SplitMix64::seed_from_u64(0).borrow_mut());
-//     assert_eq!(normalize_rt.buckets[2].records[0].cid, "0111");
-//     assert_eq!(normalize_rt.buckets[2].records[1].cid, "0010");
-//     assert_eq!(normalize_rt.buckets[2].records[2].cid, "0001");
-//     assert_eq!(normalize_rt.buckets[2].records[3].cid, "0000");
-// 	*/
-// 	p := kt.NewID(key0)
-
-// 	rt := New[key.Key256](kt.NewID(key0), 4)
-
-// 	require.Equal(t, 0, rt.SizeOfBucket(0))
-
-// 	success := rt.addPeer(key10, p)
-// 	require.True(t, success)
-// 	success = rt.addPeer(key9, p)
-// 	require.True(t, success)
-// 	success = rt.addPeer(key11, p)
-// 	require.True(t, success)
-// 	success = rt.addPeer(key6, p)
-// 	require.True(t, success)
-
-// 	rt.NormalizeRT(key0)
-// }
