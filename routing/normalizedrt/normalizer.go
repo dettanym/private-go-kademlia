@@ -92,6 +92,7 @@ func (rt *NormalizedRt[K, N]) getRecordsFromLowerBucketIndices(n int, lowerBucke
 			// First create subbuckets
 			// Each subbucket contains nodes that are equidistant to nodes from our bucket,
 			// given just the prefix of our bucket
+			// I think this is broken... 
 			sampleBucketKey := bucket[0].kadId
 			subBuckets := rt.createSubBuckets(ownBucketIndex, i, sampleBucketKey, bucket)
 
