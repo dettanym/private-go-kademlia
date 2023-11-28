@@ -345,32 +345,52 @@ func TestRunNormalizeLower(t *testing.T) {
 	require.Equal(t, bucketSize, len(peers))
 
 	// 3 nodes in desired bucket, and one from lower bucket (either 10 or 11), randomly
-	// broken rn??
+	// This is broken right now.
+	// It works if you add *all* nodes from a lower bucket but not the random part.
+	// The problem is that createSubBuckets function is not complete ?
 	expectedOrder := []libp2p.PeerID{peerIds[9], peerIds[8], peerIds[7], peerIds[10]}
 	require.Equal(t, expectedOrder, peers)
-
 }
 
-// func TestRunNormalizeHigher(t *testing.T) {
-// 	p := kt.NewID(key0)
-// 	bucketSize := 2
-// 	rt := New[key.Key256](kt.NewID(key0), bucketSize)
+func TestRunNormalizeRandLower(t *testing.T) {
+	bucketSize := 5
 
-// 	require.Equal(t, 0, rt.SizeOfBucket(0))
+	rt := NewWithKey[key.Key256, libp2p.PeerID](key0, bucketSize)
 
-// 	success := rt.addPeer(key10, p)
-// 	require.True(t, success)
-// 	success = rt.addPeer(key9, p)
-// 	require.True(t, success)
-// 	success = rt.addPeer(key11, p)
-// 	require.True(t, success)
-// 	success = rt.addPeer(key6, p)
-// 	require.True(t, success)
+	require.Equal(t, 0, rt.SizeOfBucket(0))
+	peerIds := make([]libp2p.PeerID, 0, 12)
+	for i := 0; i < 12; i++ {
+		peerIds = append(peerIds, libp2p.PeerID{ID: peer.ID(fmt.Sprintf("QmPeer%d", i))})
+	}
 
-// 	client := key3 // NormalizeRT drops the client's key before normalizing
-// 	target := key8
-// 	peers := rt.NearestNodesAsServer(target, client)
-// 	require.Equal(t, bucketSize, len(peers))
-// }
+	// adds peers in order of closest to farthest
+	// nodes in each bucket (including the last bucket) have CID equal to the bucket index
+	rt.addPeer(key9, peerIds[9])
+	rt.addPeer(key10, peerIds[10])
+	rt.addPeer(key11, peerIds[11])
+	rt.addPeer(key1, peerIds[1])
+	rt.addPeer(key5, peerIds[5])
+	rt.addPeer(key6, peerIds[6])
+	rt.addPeer(key2, peerIds[2])
+	rt.addPeer(key3, peerIds[3])
+	rt.addPeer(key4, peerIds[4])
 
+	// find the 5 nearest peers to key0
+	peers := rt.NearestNodesAsServer(key0, key3) // fetches nodes from bucket 3 (highest CPL with key0)
+	require.Equal(t, bucketSize, len(peers))
+
+	// 1 node from current bucket. 2 nodes from lower bucket. 2 random nodes from next lower bucket.
+	// the 2 random should be chosen from 1, 5, 6.
+	expectedOrder := []libp2p.PeerID{peerIds[9], peerIds[10], peerIds[11], peerIds[1],peerIds[5]}
+	require.Equal(t, expectedOrder, peers)
+
+	// find the 5 nearest peers to key0
+	peers = rt.NearestNodesAsServer(key11, key3) // fetches nodes from bucket 3 (highest CPL with key0)
+	require.Equal(t, bucketSize, len(peers))
+
+	// 2 node from current buckets. 1 node from higher bucket. 2 random nodes from next lower bucket.
+	// the 2 random should be chosen from 1, 5, 6.
+	expectedOrder = []libp2p.PeerID{peerIds[9], peerIds[10], peerIds[11], peerIds[1],peerIds[5]}
+	require.Equal(t, expectedOrder, peers)
+}
 
