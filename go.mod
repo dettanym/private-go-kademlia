@@ -1,4 +1,4 @@
-module github.com/dettanym/private-go-kademlia
+module github.com/plprobelab/go-kademlia
 
 go 1.20
 
@@ -103,4 +103,3 @@ require (
 	lukechampine.com/blake3 v1.2.1 // indirect
 )
 
-replace github.com/plprobelab/go-kademlia v0.0.0-unpublished => ./
