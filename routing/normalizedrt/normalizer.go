@@ -70,6 +70,7 @@ func (rt *NormalizedRt[K, N]) createSubBuckets(ownBucketIndex int, earlierBucket
 func (rt *NormalizedRt[K, N]) getRecordsFromLowerBucketIndices(n int, lowerBuckets [][]peerInfo[K, N], ownBucketIndex int) []peerInfo[K, N] {
 	accOuter := make([]peerInfo[K, N], 0)
 
+	// Start from closest one and then move all the way up to CPL = i = 0
 	for i := len(lowerBuckets) - 1; i >= 0; i-- {
 		if len(accOuter) == n {
 			return accOuter
