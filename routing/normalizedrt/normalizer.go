@@ -1,7 +1,6 @@
 package normalizedrt
 
 import (
-	"fmt"
 	"sort"
 )
 
@@ -33,8 +32,6 @@ func (rt *NormalizedRt[K, N]) getRecordsFromHigherBucketIndices(n int, higherBuc
 }
 
 func (rt *NormalizedRt[K, N]) createSubBuckets(ownBucketIndex int, earlierBucketIndex int, sampleBucketKey K, records []peerInfo[K, N]) [][]peerInfo[K, N] {
-	// numberOfSubBuckets := int(math.Pow(2, math.Abs(float64(ownBucketIndex-earlierBucketIndex))))
-	// subBuckets := make([][]peerInfo[K, N], numberOfSubBuckets) //<- this is wrong? because some buckets may be different size.
 
 	numberOfSubBuckets := 1
 	// sorts records by distance to sampleBucketKey
@@ -57,7 +54,6 @@ func (rt *NormalizedRt[K, N]) createSubBuckets(ownBucketIndex int, earlierBucket
 		recordDist := records[i].kadId.Xor(rt.self)
 		cmp := currDist.Compare(recordDist)
 		if cmp != 0 {
-			fmt.Println(records[recordIndexMin:i], recordIndexMin, i)
 			subBuckets = append(subBuckets, records[recordIndexMin:i])
 			currDist = recordDist
 			recordIndexMin = i
@@ -65,25 +61,6 @@ func (rt *NormalizedRt[K, N]) createSubBuckets(ownBucketIndex int, earlierBucket
 	}
 	subBuckets = append(subBuckets, records[recordIndexMin:])
 
-	// smallestDistanceToOwnBucket := int(math.Pow(2, math.Abs(float64(sampleBucketKey.BitLen()-ownBucketIndex+earlierBucketIndex-1))))
-	// subBucketIndex := 0
-	// subBucketDistanceLowerLimit := smallestDistanceToOwnBucket
-	// distSpannedByEachSubBucket := int(math.Pow(2, math.Abs(float64(sampleBucketKey.BitLen()-ownBucketIndex))))
-	// fmt.Println(subBucketIndex, subBucketDistanceLowerLimit, distSpannedByEachSubBucket)
-
-	//for _, record := range records {
-	//	recordDist := record.kadId.Xor(sampleBucketKey)
-	//	// Compare  recordDist to subBucketDistanceLowerLimit and distSpannedByEachSubBucket
-	//
-	//}
-	// No. of nodes at max in ownBucket, ignoring bucketSize = 2^(255-ownBucketIndex)
-	// No. of nodes at max in a lower subBucket ownBucketIndex -j = 2^(255-ownBucketIndex) * 2^j
-	// No. of subbuckets = 2^j
-	// Each subbucket from lowerBuckets has indices 0 to ownBucketIndex - 1
-	// So iterate over them in reverse, get ownBucketIndex - 1, ownBucketIndex - 2... 0
-	// Got to put all nodes that are within a certain distance (calculate) into first subbucket, rest into second subbucket etc.
-	fmt.Println(sampleBucketKey, records)
-	fmt.Println(subBuckets)
 	return subBuckets
 }
 
@@ -106,7 +83,7 @@ func (rt *NormalizedRt[K, N]) getRecordsFromLowerBucketIndices(n int, lowerBucke
 		} else {
 			// Can only add some records from this bucket
 			maxSubBucketsLen := n - len(accOuter)
-			accInner := make([]peerInfo[K, N], maxSubBucketsLen)
+			var accInner []peerInfo[K, N]
 
 			// First create subbuckets
 			// Each subbucket contains nodes that are equidistant to nodes from our bucket,
@@ -115,7 +92,7 @@ func (rt *NormalizedRt[K, N]) getRecordsFromLowerBucketIndices(n int, lowerBucke
 			subBuckets := rt.createSubBuckets(ownBucketIndex, i, sampleBucketKey, bucket)
 
 			// Pick upto maxSubBucketsLen elements from subBuckets
-			for j := len(subBuckets) - 1; j >= 0; j-- {
+			for j := 0; j < len(subBuckets); j++ {
 				if len(subBuckets[j]) <= maxSubBucketsLen-len(accInner) {
 					// Can add next subbucket entirely (without accInner exceeding maxSubBucketsLen)
 					accInner = append(accInner, subBuckets[j]...)
@@ -143,7 +120,6 @@ func (rt *NormalizedRt[K, N]) flattenBucketRecords(buckets [][]peerInfo[K, N]) [
 			chosenPeers = append(chosenPeers, kadIDPeerIDRecord)
 		}
 	}
-
 	return chosenPeers
 }
 
