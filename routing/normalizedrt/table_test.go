@@ -385,7 +385,7 @@ func TestRunNormalizeRandLower(t *testing.T) {
 	require.Equal(t, expectedOrder, peers)
 
 	// find the 5 nearest peers to key0
-	peers = rt.NearestNodesAsServer(key11, key3) // fetches nodes from bucket 3 (highest CPL with key0)
+	peers = rt.NearestNodesAsServer(key11, key3) // fetches nodes from bucket 2
 	require.Equal(t, bucketSize, len(peers))
 
 	// 2 node from current buckets. 1 node from higher bucket. 2 random nodes from next lower bucket.
