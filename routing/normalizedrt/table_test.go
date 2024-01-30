@@ -431,12 +431,20 @@ func TestNormalizeFullBuckets(t *testing.T) {
 		rt.addPeer(pid.Key(), *pid)
 	}
 
-	rt.NormalizeRT(rt.self)
+	bucketsWithPeerIds := rt.NormalizeRT(rt.self)
 
 	// check that all buckets are full
 	for i := 0; i < len(rt.normalizedBuckets)-1; i++ {
 		if len(rt.normalizedBuckets[i]) != bucketSize {
 			t.Errorf("bucket %d is not full, only %d values", i, len(rt.normalizedBuckets[i]))
+		}
+	}
+
+	for bid, bucket := range bucketsWithPeerIds {
+		for _, peerID := range bucket {
+			if len(peerID.ID) == 0 {
+				t.Errorf("bucket %d contains empty peerID", bid)
+			}
 		}
 	}
 
