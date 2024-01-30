@@ -157,6 +157,7 @@ func (rt *NormalizedRt[K, N]) normalizeRT(queryingPeerKadId K) [][]peerInfo[K, N
 		normalizedRecords = append(normalizedRecords, recordsFromLowerBuckets...)
 
 		rt.normalizedBuckets[index] = normalizedRecords
+		// rt.buckets[index] = normalizedRecords
 	}
 	return rt.normalizedBuckets
 }

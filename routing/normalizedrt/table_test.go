@@ -434,9 +434,9 @@ func TestNormalizeFullBuckets(t *testing.T) {
 	rt.NormalizeRT(rt.self)
 
 	// check that all buckets are full
-	for i := 0; i < len(rt.buckets)-1; i++ {
-		if len(rt.buckets[i]) != bucketSize {
-			t.Errorf("bucket %d is not full, only %d values", i, len(rt.buckets[i]))
+	for i := 0; i < len(rt.normalizedBuckets)-1; i++ {
+		if len(rt.normalizedBuckets[i]) != bucketSize {
+			t.Errorf("bucket %d is not full, only %d values", i, len(rt.normalizedBuckets[i]))
 		}
 	}
 
