@@ -33,7 +33,7 @@ func (rt *NormalizedRt[K, N]) getRecordsFromHigherBucketIndices(n int, higherBuc
 
 func (rt *NormalizedRt[K, N]) createSubBuckets(ownBucketIndex int, earlierBucketIndex int, sampleBucketKey K, records []peerInfo[K, N]) [][]peerInfo[K, N] {
 
-	numberOfSubBuckets := 1
+	// numberOfSubBuckets := 1
 	// sorts records by distance to sampleBucketKey
 	sort.SliceStable(records, func(i, j int) bool {
 		distI := records[i].kadId.Xor(rt.self)
@@ -41,7 +41,7 @@ func (rt *NormalizedRt[K, N]) createSubBuckets(ownBucketIndex int, earlierBucket
 
 		cmp := distI.Compare(distJ)
 		if cmp != 0 {
-			numberOfSubBuckets += 1
+			// numberOfSubBuckets += 1
 			return cmp < 0
 		}
 		return false
@@ -117,9 +117,10 @@ func (rt *NormalizedRt[K, N]) flattenBucketRecords(buckets [][]peerInfo[K, N]) [
 
 	for index := len(buckets) - 1; index >= 0; index-- {
 		bucket := buckets[index]
-		for _, kadIDPeerIDRecord := range bucket {
-			chosenPeers = append(chosenPeers, kadIDPeerIDRecord)
-		}
+		chosenPeers = append(chosenPeers, bucket...)
+		// for _, kadIDPeerIDRecord := range bucket {
+		// 	chosenPeers = append(chosenPeers, kadIDPeerIDRecord)
+		// }
 	}
 	return chosenPeers
 }
@@ -133,11 +134,14 @@ func (rt *NormalizedRt[K, N]) normalizeRT(queryingPeerKadId K) [][]peerInfo[K, N
 		rt.initializeNormalizedBucketsForClient(queryingPeerKadId)
 	}
 
+	var normalizedRecords []peerInfo[K, N]
 	// TODO: Add own key?
 	for index := len(rt.buckets) - 1; index >= 0; index-- {
+		normalizedRecords = []peerInfo[K, N]{} // reset normalizedRecords
 		bucket := rt.buckets[index]
 
 		initialBucketSize := len(bucket)
+		normalizedRecords = append(normalizedRecords, bucket...)
 
 		recordsFromHigherBuckets := rt.getRecordsFromHigherBucketIndices(
 			rt.bucketSize-initialBucketSize,
@@ -149,12 +153,11 @@ func (rt *NormalizedRt[K, N]) normalizeRT(queryingPeerKadId K) [][]peerInfo[K, N
 			index,
 		)
 
-		normalizedRecords := append(bucket, recordsFromHigherBuckets...)
+		normalizedRecords = append(normalizedRecords, recordsFromHigherBuckets...)
 		normalizedRecords = append(normalizedRecords, recordsFromLowerBuckets...)
 
 		rt.normalizedBuckets[index] = normalizedRecords
 	}
-
 	return rt.normalizedBuckets
 }
 

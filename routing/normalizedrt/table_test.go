@@ -6,6 +6,7 @@ import (
 	"sync"
 	"testing"
 
+	"github.com/libp2p/go-libp2p/core/crypto"
 	"github.com/libp2p/go-libp2p/core/peer"
 	"github.com/plprobelab/go-kademlia/libp2p"
 
@@ -13,6 +14,8 @@ import (
 	"github.com/plprobelab/go-kademlia/key"
 	"github.com/stretchr/testify/require"
 )
+
+var rng = rand.New(rand.NewSource(1337))
 
 func zeroBytes(n int) []byte {
 	bytes := make([]byte, n)
@@ -381,7 +384,7 @@ func TestRunNormalizeRandLower(t *testing.T) {
 
 	// 1 node from current bucket. 2 nodes from lower bucket. 2 random nodes from next lower bucket.
 	// the 2 random should be chosen from 1, 5, 6.
-	expectedOrder := []libp2p.PeerID{peerIds[9], peerIds[10], peerIds[11], peerIds[1],peerIds[5]}
+	expectedOrder := []libp2p.PeerID{peerIds[9], peerIds[10], peerIds[11], peerIds[1], peerIds[5]}
 	require.Equal(t, expectedOrder, peers)
 
 	// find the 5 nearest peers to key0
@@ -390,7 +393,51 @@ func TestRunNormalizeRandLower(t *testing.T) {
 
 	// 2 node from current buckets. 1 node from higher bucket. 2 random nodes from next lower bucket.
 	// the 2 random should be chosen from 1, 5, 6.
-	expectedOrder = []libp2p.PeerID{peerIds[9], peerIds[10], peerIds[11], peerIds[1],peerIds[5]}
+	expectedOrder = []libp2p.PeerID{peerIds[9], peerIds[10], peerIds[11], peerIds[1], peerIds[5]}
 	require.Equal(t, expectedOrder, peers)
 }
 
+func newPeerID(t testing.TB) (peer.ID, crypto.PrivKey) {
+	id, key := newIdentity(t)
+	return id, key
+}
+
+func newIdentity(t testing.TB) (peer.ID, crypto.PrivKey) {
+	t.Helper()
+
+	priv, pub, err := crypto.GenerateEd25519Key(rng)
+	require.NoError(t, err)
+
+	id, err := peer.IDFromPublicKey(pub)
+	require.NoError(t, err)
+
+	return id, priv
+}
+
+func TestNormalizeFullBuckets(t *testing.T) {
+	n := 250
+	peers := make([]*libp2p.PeerID, n)
+	bucketSize := 20
+	rt := NewWithKey[key.Key256, libp2p.PeerID](key0, bucketSize)
+
+	for i := 0; i < n; i++ {
+		// generate peer ID
+		ppid, _ := newPeerID(t)
+		pid := libp2p.NewPeerID(ppid)
+
+		peers[i] = pid
+
+		// add peer to routing table
+		rt.addPeer(pid.Key(), *pid)
+	}
+
+	rt.NormalizeRT(rt.self)
+
+	// check that all buckets are full
+	for i := 0; i < len(rt.buckets)-1; i++ {
+		if len(rt.buckets[i]) != bucketSize {
+			t.Errorf("bucket %d is not full, only %d values", i, len(rt.buckets[i]))
+		}
+	}
+
+}

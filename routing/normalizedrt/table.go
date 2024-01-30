@@ -33,10 +33,10 @@ var _ kad.RoutingTable[key.Key256, kadtest.ID[key.Key256]] = (*NormalizedRt[key.
 
 func New[K kad.Key[K], N kad.NodeID[K]](self N, bucketSize int) *NormalizedRt[K, N] {
 	rt := NormalizedRt[K, N]{
-		self:              self.Key(),
-		buckets:           make([][]peerInfo[K, N], 0),
-		bucketSize:        bucketSize,
-		normalizedBuckets: make([][]peerInfo[K, N], 0),
+		self:                         self.Key(),
+		buckets:                      make([][]peerInfo[K, N], 0),
+		bucketSize:                   bucketSize,
+		normalizedBuckets:            make([][]peerInfo[K, N], 0),
 		rand:                         *rand.New(rand.NewSource(37)),
 		peersAddedSinceNormalization: false,
 	}
@@ -48,10 +48,10 @@ func New[K kad.Key[K], N kad.NodeID[K]](self N, bucketSize int) *NormalizedRt[K,
 // Only use for testing NearestNodes or NearestNodesAsServer
 func NewWithKey[K kad.Key[K], N kad.NodeID[K]](key K, bucketSize int) *NormalizedRt[K, N] {
 	rt := NormalizedRt[K, N]{
-		self:              key,
-		buckets:           make([][]peerInfo[K, N], 0),
-		bucketSize:        bucketSize,
-		normalizedBuckets: make([][]peerInfo[K, N], 0),
+		self:                         key,
+		buckets:                      make([][]peerInfo[K, N], 0),
+		bucketSize:                   bucketSize,
+		normalizedBuckets:            make([][]peerInfo[K, N], 0),
 		rand:                         *rand.New(rand.NewSource(37)),
 		peersAddedSinceNormalization: false,
 	}
